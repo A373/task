@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import News_feed
+from .models import Newsfeed, Session
 # Register your models here.
 
-admin.site.register(News_feed)
+admin.site.register(Newsfeed)
+admin.site.register(Session)
