@@ -40,7 +40,7 @@ def log_in(request):
         content = {
             'message': 'incorrect user_name or password'
         }
-        return Response(content, status=status.HTTP_401_UNAUTHORIZED)
+        return Response(content, status=status.HTTP_400_BAD_REQUEST)
     else:
         try:
             previous_tokens = Session.objects.filter(user_id=user.id)
