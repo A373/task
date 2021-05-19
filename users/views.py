@@ -10,7 +10,7 @@ import uuid
 
 # Create your views here.
 @api_view(['POST'])
-def sign_in(request):
+def sign_up(request):
     user_name = request.POST.get('user_name', None)
     password = request.POST.get('password', None)
     confirm_password = request.POST.get('confirm_password', None)
@@ -42,17 +42,27 @@ def log_in(request):
         }
         return Response(content, status=status.HTTP_401_UNAUTHORIZED)
     else:
-        new_token = str(uuid.uuid4())
-        new_session = Session.objects.create(
-            user_id=user.id,
-            token=new_token
-        )
-        new_session.save()
-        content = {
-            'token': new_session.token
-        }
-
-        return Response(content, status=status.HTTP_200_OK)
+        try:
+            previous_tokens = Session.objects.filter(user_id=user.id)
+            for session in previous_tokens:
+                session.is_active = False
+                session.save()
+                new_token = str(uuid.uuid4())
+                new_session = Session.objects.create(
+                    user_id=user.id,
+                    token=new_token,
+                    is_active=True,
+                )
+                new_session.save()
+                content = {
+                    'token': new_session.token
+                }
+                return Response(content, status=status.HTTP_200_OK)
+        except Session.DoesNotExist:
+            content = {
+                'message': 'Invalid user_name or password'
+            }
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
@@ -64,12 +74,11 @@ def news_feed(request):
         }
         return Response(content, status=status.HTTP_400_BAD_REQUEST)
     try:
-        if token.is_active:
+        token_info = Session.objects.get(
+            token=token
+        )
+        if token_info.is_active:
             print("token is valid, active and authenticated")
-            token_info = Session.objects.get(
-                token=token
-            )
-
             news_feeds = Newsfeed.objects.filter(user_id=token_info.user_id)
             feed = []
             for news_feed in news_feeds:
@@ -83,7 +92,10 @@ def news_feed(request):
             }
             return Response(content, status=status.HTTP_200_OK)
         else:
-            print("token is invalid, the token has been disabled!")
+            content = {
+                'message': "token is invalid, the token has been disabled!"
+            }
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
     except Session.DoesNotExist:
         content = {
             'message': 'Authentication failed'
@@ -93,18 +105,25 @@ def news_feed(request):
 
 @api_view(['POST'])
 def support(request):
-    user_name = request.POST.get('user_name', None)
-    password = request.POST.get('password', None)
-    user = authenticate(username=user_name, password=password)
-    if user is None:
+    token = request.POST.get('token', None)
+    if token is None:
         content = {
             'message': 'Hii, ==== you are not a user of our community ==== ',
             'support_number': '108'
         }
         return Response(content, status=status.HTTP_200_OK)
-    elif user is not None:
-        content = {
-            'message': 'Welcome to our community @' + user.username,
-            'support_number': '100'
-        }
-        return Response(content, status=status.HTTP_200_OK)
+    elif token is not None:
+        try:
+            token_info = Session.objects.get(token=token, is_active=True)
+            if token_info.is_active is True:
+                content = {
+                    'message': 'Welcome to our community ',
+                    'support_number': '100'
+                }
+                return Response(content, status=status.HTTP_200_OK)
+
+        except Session.DoesNotExist:
+            content = {
+                'message': 'token has expired'
+            }
+            return Response(content, status=status.HTTP_400_BAD_REQUEST)
