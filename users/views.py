@@ -51,6 +51,7 @@ def log_in(request):
         content = {
             'token': new_session.token
         }
+
         return Response(content, status=status.HTTP_200_OK)
 
 
@@ -63,21 +64,26 @@ def news_feed(request):
         }
         return Response(content, status=status.HTTP_400_BAD_REQUEST)
     try:
-        token_info = Session.objects.get(
-            token=token
-        )
-        news_feeds = Newsfeed.objects.filter(user_id=token_info.user_id)
-        feed = []
-        for news_feed in news_feeds:
-            temp = {
-                'feed_id': news_feed.id,
-                'body': news_feed.body
-            }
-            feed.append(temp)
-        content = {
+        if token.is_active:
+            print("token is valid, active and authenticated")
+            token_info = Session.objects.get(
+                token=token
+            )
+
+            news_feeds = Newsfeed.objects.filter(user_id=token_info.user_id)
+            feed = []
+            for news_feed in news_feeds:
+                temp = {
+                    'feed_id': news_feed.id,
+                    'body': news_feed.body
+                }
+                feed.append(temp)
+            content = {
                 'news_feeds': feed
-        }
-        return Response(content, status=status.HTTP_200_OK)
+            }
+            return Response(content, status=status.HTTP_200_OK)
+        else:
+            print("token is invalid, the token has been disabled!")
     except Session.DoesNotExist:
         content = {
             'message': 'Authentication failed'
@@ -92,13 +98,13 @@ def support(request):
     user = authenticate(username=user_name, password=password)
     if user is None:
         content = {
-            'message': 'Hii, you are not a user of our community--',
+            'message': 'Hii, ==== you are not a user of our community ==== ',
             'support_number': '108'
         }
         return Response(content, status=status.HTTP_200_OK)
     elif user is not None:
         content = {
-            'message': 'Welcome to our community--' + user.username,
+            'message': 'Welcome to our community @' + user.username,
             'support_number': '100'
         }
         return Response(content, status=status.HTTP_200_OK)

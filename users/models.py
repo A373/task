@@ -12,3 +12,4 @@ class Newsfeed(models.Model):
 class Session(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True)
     token = models.TextField()
+    is_active = models.BooleanField(null=True)
