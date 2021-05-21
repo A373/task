@@ -15,12 +15,19 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from users.views import sign_up, log_in, news_feed, support
+from users.views import news_feed
+
+
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+    TokenVerifyView
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('sign_up/', sign_up, name='sign_up'),
-    path('log_in/', log_in, name='log_in'),
-    path('news_feed/', news_feed, name='news_feed'),
-    path('support/', support, name='support')
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
+    path('news_feed/', news_feed, name='news_feed')
 ]
